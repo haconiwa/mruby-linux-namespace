@@ -20,6 +20,11 @@ task :test => :compile do
   sh "cd mruby && sudo bin/mrbtest"
 end
 
+desc "code format"
+task :format do
+  sh "./misc/apply-clang-format"
+end
+
 desc "cleanup"
 task :clean do
   exit 0 unless File.directory?('mruby')
