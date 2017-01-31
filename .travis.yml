@@ -27,4 +27,5 @@ branches:
     - master
 
 script:
+  - rake format
   - rake test
