@@ -172,6 +172,9 @@ static mrb_value mrb_namespace_setns_by_pid(mrb_state *mrb, mrb_value self)
       mrb_raise(mrb, E_RUNTIME_ERROR, "ns file detection failed");
     }
     fileno = open(procpath, O_RDONLY);
+    if (fileno < 0) {
+      mrb_namespace_sys_fail(mrb, errno, "open failed");
+    }
 
     ret = mrb_namespace_setns(mrb, fileno, curns);
     close(fileno);
