@@ -83,11 +83,16 @@ static mrb_value mrb_namespace_unshare(mrb_state *mrb, mrb_value self)
 {
   int unshare_flags = 0;
   mrb_int arg;
+  int ret;
 
   mrb_get_args(mrb, "i", &arg);
   unshare_flags = (int)arg;
+  ret = unshare(unshare_flags);
+  if (ret < 0) {
+    mrb_namespace_sys_fail(mrb, errno, "unshare failed");
+  }
 
-  return mrb_fixnum_value((mrb_int)unshare(unshare_flags));
+  return mrb_fixnum_value((mrb_int)ret);
 }
 
 static mrb_value mrb_namespace_setns_by_fd(mrb_state *mrb, mrb_value self)
