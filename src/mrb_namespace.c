@@ -21,6 +21,8 @@
 #include <features.h>
 #include <signal.h>
 #include <pthread.h>
+#include <stdarg.h>
+#include <errno.h>
 
 #include <mruby.h>
 #include <mruby/data.h>
@@ -32,6 +34,32 @@
 // clang-format on
 
 #define DONE mrb_gc_arena_restore(mrb, 0);
+
+#define SYS_FAIL_MESSAGE_LENGTH 2048
+
+static void mrb_namespace_sys_fail(mrb_state *mrb, int error_no, const char *fmt, ...)
+{ 
+  char buf[1024];
+  char arg_msg[SYS_FAIL_MESSAGE_LENGTH];
+  char err_msg[SYS_FAIL_MESSAGE_LENGTH];
+  char *ret;
+  va_list args;
+
+  va_start(args, fmt);
+  vsnprintf(arg_msg, SYS_FAIL_MESSAGE_LENGTH, fmt, args);
+  va_end(args);
+
+  if ((ret = strerror_r(error_no, buf, 1024)) == NULL) {
+    snprintf(err_msg, SYS_FAIL_MESSAGE_LENGTH, "[BUG] strerror_r failed at %s:%s. Please report haconiwa-dev", __FILE__,
+             __func__);
+    mrb_sys_fail(mrb, err_msg);
+  }
+
+  snprintf(err_msg, SYS_FAIL_MESSAGE_LENGTH, "sys failed. errno: %d message: %s mrbgem message: %s", error_no, ret,
+           arg_msg);
+  mrb_sys_fail(mrb, err_msg);
+}
+
 
 #if __GLIBC__ != 2 || __GLIBC_MINOR__ < 14
 #include <sys/syscall.h>
@@ -69,7 +97,7 @@ static mrb_value mrb_namespace_setns_by_fd(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "ii", &fileno, &nstype);
   ret = mrb_namespace_setns(mrb, fileno, nstype);
   if (ret < 0) {
-    mrb_sys_fail(mrb, "setns failed");
+    mrb_namespace_sys_fail(mrb, errno, "setns failed");
   }
 
   return mrb_fixnum_value(ret);
@@ -146,7 +174,7 @@ static mrb_value mrb_namespace_setns_by_pid(mrb_state *mrb, mrb_value self)
     /* allocated via asprintf */
     free(procpath);
     if (ret < 0) {
-      mrb_sys_fail(mrb, "setns failed");
+      mrb_namespace_sys_fail(mrb, errno, "setns failed");
     }
     ns_count++;
   }
@@ -172,15 +200,15 @@ static mrb_value mrb_namespace_persist_ns(mrb_state *mrb, mrb_value self)
 
   int dest_fd;
   if ((dest_fd = open(dest, O_WRONLY | O_CREAT, 0660)) < 0) {
-    mrb_sys_fail(mrb, "open dest file failed");
+    mrb_namespace_sys_fail(mrb, errno, "open dest file failed");
   }
   if (futimens(dest_fd, NULL) < 0) {
-    mrb_sys_fail(mrb, "futimens failed");
+    mrb_namespace_sys_fail(mrb, errno, "futimens failed");
   }
   close(dest_fd);
 
   if (mount(procpath, dest, "none", MS_BIND, NULL) < 0) {
-    mrb_sys_fail(mrb, "mount failed - cannot bind ns file to other location");
+    mrb_namespace_sys_fail(mrb, errno, "mount failed - cannot bind ns file to other location");
   }
 
   /* allocated via asprintf */
@@ -229,8 +257,9 @@ static mrb_value mrb_namespace_clone(mrb_state *mrb, mrb_value self)
     p->block = block;
 
     stack = malloc(STACK_SIZE);
-    if (p == NULL || stack == NULL)
-      mrb_sys_fail(mrb, "malloc failed");
+    if (p == NULL || stack == NULL) {
+      mrb_namespace_sys_fail(mrb, errno, "malloc failed");
+    }
 
     stack_top = stack + STACK_SIZE;
 
@@ -238,7 +267,7 @@ static mrb_value mrb_namespace_clone(mrb_state *mrb, mrb_value self)
     pid = clone(mrb_clone_childfunc, stack_top, SIGCHLD | flag, NULL);
     if (pid < 0) {
       perror("clone");
-      mrb_sys_fail(mrb, "clone failed");
+      mrb_namespace_sys_fail(mrb, errno, "clone failed");
     }
 
     return mrb_fixnum_value(pid);
