@@ -135,7 +135,6 @@ static int mrb_namespace_pid_to_nsfile(mrb_state *mrb, char **procpath, pid_t _p
 #endif
   default:
     mrb_raise(mrb, NULL, "invalid namespace id. check that flag is or'ed?");
-    return -1;
   }
 
   return ret;
