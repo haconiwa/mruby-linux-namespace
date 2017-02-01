@@ -38,7 +38,7 @@
 #define SYS_FAIL_MESSAGE_LENGTH 2048
 
 static void mrb_namespace_sys_fail(mrb_state *mrb, int error_no, const char *fmt, ...)
-{ 
+{
   char buf[1024];
   char arg_msg[SYS_FAIL_MESSAGE_LENGTH];
   char err_msg[SYS_FAIL_MESSAGE_LENGTH];
@@ -59,7 +59,6 @@ static void mrb_namespace_sys_fail(mrb_state *mrb, int error_no, const char *fmt
            arg_msg);
   mrb_sys_fail(mrb, err_msg);
 }
-
 
 #if __GLIBC__ != 2 || __GLIBC_MINOR__ < 14
 #include <sys/syscall.h>
