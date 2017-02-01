@@ -143,6 +143,8 @@ static mrb_value mrb_namespace_setns_by_pid(mrb_state *mrb, mrb_value self)
 
     ret = mrb_namespace_setns(mrb, fileno, curns);
     close(fileno);
+    /* allocated via asprintf */
+    free(procpath);
     if (ret < 0) {
       mrb_sys_fail(mrb, "setns failed");
     }
@@ -180,6 +182,10 @@ static mrb_value mrb_namespace_persist_ns(mrb_state *mrb, mrb_value self)
   if (mount(procpath, dest, "none", MS_BIND, NULL) < 0) {
     mrb_sys_fail(mrb, "mount failed - cannot bind ns file to other location");
   }
+
+  /* allocated via asprintf */
+  free(procpath);
+
   return mrb_fixnum_value(0);
 }
 
