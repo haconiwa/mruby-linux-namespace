@@ -260,11 +260,15 @@ static mrb_value mrb_namespace_clone(mrb_state *mrb, mrb_value self)
 
   if (!mrb_nil_p(block)) {
     p = (struct mrb_clone_params *)malloc(sizeof(struct mrb_clone_params));
+    if (p == NULL) {
+      mrb_namespace_sys_fail(mrb, errno, "malloc failed");
+    }
+
     p->mrb = mrb;
     p->block = block;
 
     stack = malloc(STACK_SIZE);
-    if (p == NULL || stack == NULL) {
+    if (stack == NULL) {
       mrb_namespace_sys_fail(mrb, errno, "malloc failed");
     }
 
