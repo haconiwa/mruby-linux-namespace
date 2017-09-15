@@ -95,10 +95,11 @@ static mrb_value mrb_namespace_unshare(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_namespace_setns_by_fd(mrb_state *mrb, mrb_value self)
 {
-  int fileno, nstype, ret;
+  mrb_int fileno, nstype;
+  int ret;
 
   mrb_get_args(mrb, "ii", &fileno, &nstype);
-  ret = mrb_namespace_setns(mrb, fileno, nstype);
+  ret = mrb_namespace_setns(mrb, (int)fileno, (int)nstype);
   if (ret < 0) {
     mrb_namespace_sys_fail(mrb, errno, "setns failed");
   }
@@ -145,7 +146,8 @@ static int mrb_namespace_pid_to_nsfile(mrb_state *mrb, char **procpath, pid_t _p
 
 static mrb_value mrb_namespace_setns_by_pid(mrb_state *mrb, mrb_value self)
 {
-  int pid, nsflag, fileno, ret;
+  mrb_int pid, nsflag;
+  int fileno, ret;
   int ns_count = 0;
   char *procpath;
 
@@ -162,7 +164,7 @@ static mrb_value mrb_namespace_setns_by_pid(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "ii", &pid, &nsflag);
 
   for (int i = 0; namespaces[i]; ++i) {
-    int curns = nsflag & namespaces[i];
+    int curns = ((int)nsflag & namespaces[i]);
     if (!curns)
       continue;
 
