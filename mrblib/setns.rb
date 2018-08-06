@@ -4,13 +4,14 @@ module Namespace
       return nsenter(flag, options, &blk)
     end
 
+    flag_ = ::Namespace.resolve_flag(flag)
     fd = options[:fd]
     pid = options[:pid]
 
     if fd
-      setns_by_fd(fd, flag)
+      setns_by_fd(fd, flag_)
     elsif pid
-      setns_by_pid(pid, flag)
+      setns_by_pid(pid, flag_)
     else
       raise ArgumentError, "Options :fd or :pid must be specified"
     end
