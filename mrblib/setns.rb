@@ -18,7 +18,7 @@ module Namespace
   end
 
   def self.nsenter(flag, options, &blk)
-    unless Object.const_get(:Process)
+    unless Object.const_defined? :Process
       raise NotImplementedError, "Namespace.nsenter depends on mruby-process"
     end
 

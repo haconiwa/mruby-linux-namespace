@@ -8,7 +8,7 @@ module Namespace
     :net => CLONE_NEWNET,
     :user => CLONE_NEWUSER
   }
-  if Namespace.const_get :CLONE_NEWCGROUP
+  if Namespace.const_defined? :CLONE_NEWCGROUP
     FLAG_MAP[:cgroup] = CLONE_NEWCGROUP
   end
   FLAG_MAP.freeze
