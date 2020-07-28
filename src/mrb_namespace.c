@@ -137,6 +137,11 @@ static int mrb_namespace_pid_to_nsfile(mrb_state *mrb, char **procpath, pid_t _p
     ret = asprintf(procpath, procpath_fmt, pid, "cgroup");
     break;
 #endif
+#ifdef CLONE_NEWTIME
+  case CLONE_NEWTIME:
+    ret = asprintf(procpath, procpath_fmt, pid, "time");
+    break;
+#endif
   default:
     mrb_raise(mrb, NULL, "invalid namespace id. check that flag is or'ed?");
   }
@@ -151,15 +156,16 @@ static mrb_value mrb_namespace_setns_by_pid(mrb_state *mrb, mrb_value self)
   int ns_count = 0;
   char *procpath;
 
+  int namespaces[] = {
+      CLONE_NEWNS, CLONE_NEWUTS, CLONE_NEWIPC, CLONE_NEWUSER, CLONE_NEWPID, CLONE_NEWNET,
 #ifdef CLONE_NEWCGROUP
-  int namespaces[8] = {
-      CLONE_NEWNS, CLONE_NEWUTS, CLONE_NEWIPC, CLONE_NEWUSER, CLONE_NEWPID, CLONE_NEWNET, CLONE_NEWCGROUP, 0,
-  };
-#else
-  int namespaces[7] = {
-      CLONE_NEWNS, CLONE_NEWUTS, CLONE_NEWIPC, CLONE_NEWUSER, CLONE_NEWPID, CLONE_NEWNET, 0,
-  };
+      CLONE_NEWCGROUP,
 #endif
+#ifdef CLONE_NEWTIME
+      CLONE_NEWTIME,
+#endif
+      0,
+  };
 
   mrb_get_args(mrb, "ii", &pid, &nsflag);
 
@@ -322,6 +328,9 @@ void mrb_mruby_linux_namespace_gem_init(mrb_state *mrb)
   mrb_define_const(mrb, namespace, "CLONE_IO", mrb_fixnum_value(CLONE_IO));
 #ifdef CLONE_NEWCGROUP
   mrb_define_const(mrb, namespace, "CLONE_NEWCGROUP", mrb_fixnum_value(CLONE_NEWCGROUP));
+#endif
+#ifdef CLONE_NEWTIME
+  mrb_define_const(mrb, namespace, "CLONE_NEWTIME", mrb_fixnum_value(CLONE_NEWTIME));
 #endif
 
   DONE;
