@@ -27,7 +27,6 @@ module Namespace
         ::Namespace.setns(flag, options)
         blk.call
       rescue => e
-        raise e
         exit(127)
       end
     end
